@@ -1,3 +1,7 @@
+売上=β_0+β_1⋅雨フラグ+ε
+
+
+
 class readdata
 file_read 
 openread (input_file)　名前
