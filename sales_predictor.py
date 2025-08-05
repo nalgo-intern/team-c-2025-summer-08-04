@@ -15,6 +15,13 @@ class read_data:
         self.df = pd.read_csv(csv_path)
         self.model = RandomForestRegressor(random_state=42)
 
+    def input_data(self):
+        pre_year,pre_month,pre_day= input("空白区切りで日付を入力してください(year month day):").split()
+        weather_str = input("天気を入力してください:(晴れ くもり 雨):")
+        weather_map={"晴れ":0, "くもり":1, "雨":2}
+        pre_weather = weather_map[weather_str]
+        return int(pre_year),int(pre_month),int(pre_day),pre_weather
+
 class Learn_data:
     def __init__(self, df, model):
         self.df = df
@@ -65,11 +72,12 @@ class Learn_data:
         self.evaluate(X_test, y_test)
 
 if __name__ == "__main__":
+    loader = read_data("test.csv") 
+    pre_year,pre_month,pre_day,pre_weather = loader.input_data() 
     start = time.time()
-    loader = read_data("test.csv")  
     predictor = Learn_data(loader.df, loader.model)
     predictor.run()
-    predictor.predict_single(2024, 8, 5, 0)
+    predictor.predict_single(pre_year,pre_month,pre_day,pre_weather)
     end = time.time()
     run_time = end - start
     print(run_time)
