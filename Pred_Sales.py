@@ -13,23 +13,29 @@ class read_data:
         初期化：CSVファイルからデータを読み込み、モデルも準備
         """
         self.df = pd.read_csv(csv_path)
-        self.model = RandomForestRegressor(random_state=42)
-    
-    def split_data(self):
-        """
-        年月日の分割
-        """
-        # 各列の変数は仮の値
-        self.df["year"] = None
-        self.df["month"] = None
-        self.df["day"] = None
-        # 日付のデータが0列目にある想定
-        for i in range(len(self.df)):
-            Y, M, D = self.df.iloc[i, 0].split("-")
-            self.df.iloc[i, 3] = int(Y)
-            self.df.iloc[i, 4] = int(M)
-            self.df.iloc[i, 5] = int(D)
 
+        # 列名変換
+        self.df.rename(columns={
+            "日付": "date",
+            "売り上げ": "sales",
+            "天気": "weather"
+        }, inplace=True)
+
+        # 日付を年月日に分解
+        self.df["date"] = pd.to_datetime(self.df["date"])
+        self.df["year"] = self.df["date"].dt.year
+        self.df["month"] = self.df["date"].dt.month
+        self.df["day"] = self.df["date"].dt.day
+
+        # 天気を数値に変換
+        weather_map = {"晴れ": 0, "くもり": 1, "雨": 2}
+        self.df["weather"] = self.df["weather"].map(weather_map)
+
+        self.model = RandomForestRegressor(random_state=42)
+    def split_data(self):
+        for i in range(len(self.df)):
+            dt = self.df.iloc[i, 0]  
+            Y, M, D = dt.year, dt.month, dt.day
     def input_data(self):
         pre_year,pre_month,pre_day= input("空白区切りで日付を入力してください(year month day):").split()
         weather_str = input("天気を入力してください:(晴れ くもり 雨):")
