@@ -4,6 +4,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, mean_squared_error
 import time
 
+"""
+後で変更した内容を統合
+"""
 class read_data:
     def __init__(self, csv_path):
         """
