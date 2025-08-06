@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>売上予測</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <h1>売上予測</h1>
+
+  <h2>① CSVファイルをアップロード</h2>
+  <input type="file" id="csvFile">
+  <button onclick="uploadCSV()">アップロードして学習</button>
+  <p id="uploadStatus"></p>
+
+  <h2>② 予測入力</h2>
+  <!-- 年 -->
+<label>年:
+  <select id="year"></select>
+</label>
+
+<!-- 月 -->
+<label>月:
+  <select id="month"></select>
+</label>
+
+<!-- 日 -->
+<label>日:
+  <select id="day"></select>
+</label>
+
+<!-- 天気 -->
+<label>天気:
+  <select id="weather">
+    <option value="0">晴れ</option>
+    <option value="1">くもり</option>
+    <option value="2">雨</option>
+  </select>
+</label>
+
+  <button onclick="sendData()">予測する</button>
+  <h3 id="result"></h3>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  <script src="../static/predict.js" defer></script>
+
+</body>
+</html>
