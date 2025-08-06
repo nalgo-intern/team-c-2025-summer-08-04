@@ -1,3 +1,4 @@
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 mainから作業ブランチへのマージ
 git fetch origin
 git merge origin/main
