@@ -1,7 +1,9 @@
 from flask import Flask, request, jsonify, render_template
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
+from flask_cors import CORS
 app = Flask(__name__)
+CORS(app)
 
 model = None
 df = None
