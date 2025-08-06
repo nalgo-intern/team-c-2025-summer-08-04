@@ -1,3 +1,7 @@
+mainから作業ブランチへのマージ
+git fetch origin
+git merge origin/main
+
 候補１.売上=β_0+β_1⋅雨フラグ+ε
 
 
