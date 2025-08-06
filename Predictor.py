@@ -4,6 +4,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from flask_cors import CORS
+import datetime
 app = Flask(__name__)
 CORS(app)
 
@@ -24,11 +25,14 @@ def upload_csv():
     df["year"] = df["date"].dt.year
     df["month"] = df["date"].dt.month
     df["day"] = df["date"].dt.day
+    df["dayofweek"] = df["date"].dt.dayofweek  
+    df["is_weekend"] = df["dayofweek"].apply(lambda x: int(x in [0, 4, 5, 6]))
+
     weather_map = {"晴れ": 0, "くもり": 1, "雨": 2}
     df["weather"] = df["天気"].map(weather_map)
     df["sales"] = df["売り上げ"]
 
-    X = df[["year", "month", "day", "weather"]]
+    X = df[["year", "month", "day", "weather","is_weekend"]]
     y = df["sales"]
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -57,10 +61,15 @@ def predict():
     year = data["year"]
     month = data["month"]
     day = data["day"]
-    weather = data["weather"]
 
-    X_input = pd.DataFrame([[year, month, day, weather]],
-                           columns=["year", "month", "day", "weather"])
+    date = datetime.date(year, month, day)
+    weather = data["weather"]
+    dayofweek = date.weekday()  
+    is_weekend = int(dayofweek in [0, 4, 5, 6])
+
+    X_input = pd.DataFrame([[year, month, day, weather, is_weekend]],
+                           columns=["year", "month", "day", "weather", "is_weekend"])
+
     pred = model.predict(X_input)[0]
     return jsonify({"predicted_sales": int(pred)})
 
