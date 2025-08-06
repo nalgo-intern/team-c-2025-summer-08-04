@@ -1,7 +1,11 @@
 from flask import Flask, request, jsonify, render_template
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
+from flask_cors import CORS
 app = Flask(__name__)
+CORS(app)
 
 model = None
 df = None
@@ -26,10 +30,22 @@ def upload_csv():
 
     X = df[["year", "month", "day", "weather"]]
     y = df["sales"]
-    model = RandomForestRegressor()
-    model.fit(X, y)
 
-    return jsonify({"message": "CSVを受け取り、学習が完了しました"})
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    model = RandomForestRegressor(random_state=42)
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+
+    r2 = r2_score(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
+    mae = mean_absolute_error(y_test, y_pred)
+
+    return jsonify({
+        "message": "CSVを受け取り、学習と評価が完了しました",
+        "r2_score": round(r2, 4),
+        "mse": round(mse, 2),
+        "mae": round(mae, 2)
+    })
 
 @app.route("/sendData", methods=["POST"])
 def predict():
