@@ -6,6 +6,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from flask_cors import CORS
 import datetime
+import matplotlib.pyplot as plt  
+
 app = Flask(__name__)
 CORS(app)
 
@@ -38,7 +40,7 @@ def upload_csv():
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    # Optunaでハイパーパラメータチューニング
+    # Optunaによるチューニング
     def objective(trial):
         params = {
             "max_depth": trial.suggest_int("max_depth", 3, 10),
@@ -62,6 +64,18 @@ def upload_csv():
     model = xgb.XGBRegressor(**best_params, random_state=42)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
+
+    # 特徴量の重要度をPNGに保存
+    features = X.columns
+    importances = model.feature_importances_
+
+    plt.figure(figsize=(8, 5))
+    plt.barh(features, importances, color="lightblue")
+    plt.xlabel("Importance")
+    plt.title("Feature Importance")
+    plt.tight_layout()
+    plt.savefig("static/features_xgb.png")  
+    plt.close()
 
     r2 = r2_score(y_test, y_pred)
     mse = mean_squared_error(y_test, y_pred)

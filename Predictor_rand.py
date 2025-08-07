@@ -6,6 +6,7 @@ from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from flask_cors import CORS
 import datetime
 import optuna
+import matplotlib.pyplot as plt
 
 app = Flask(__name__)
 CORS(app)
@@ -65,6 +66,21 @@ def upload_csv():
     best_params["random_state"] = 42
     model = RandomForestRegressor(**best_params)
     model.fit(X_train, y_train)
+
+    # 特徴量の重要度を取得
+    importance = model.feature_importances_
+    features = ["year", "month", "day", "weather", "is_weekend"]
+    importance_dict = dict(zip(features, importance))
+
+    # グラフを描画・保存
+    plt.figure(figsize=(8, 5))
+    plt.barh(features, importance, color="skyblue")
+    plt.xlabel("Importance")
+    plt.title("Feature Importance")
+    plt.tight_layout()
+    plt.savefig("static/features_rand.png")  # static フォルダに保存
+    plt.close()
+
     y_pred = model.predict(X_test)
 
     r2 = r2_score(y_test, y_pred)
