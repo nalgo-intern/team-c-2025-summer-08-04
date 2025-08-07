@@ -126,7 +126,7 @@ def predict():
 
     pred_rand = model_rand.predict(X_input)[0]
     pred_xgb = model_xgb.predict(X_input)[0]
-    final_pred = 0.4 * pred_rand + 0.6 * pred_xgb
+    final_pred = 0.2 * pred_rand + 0.8 * pred_xgb
 
     return jsonify({"predicted_sales": int(final_pred)})
 
