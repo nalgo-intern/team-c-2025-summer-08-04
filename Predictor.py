@@ -83,14 +83,14 @@ def upload_csv():
     model_rand.fit(X_train, y_train)
 
     study_xgb = optuna.create_study(direction="minimize")
-    study_xgb.optimize(objective_xgb, n_trials=30)
+    study_xgb.optimize(objective_xgb, n_trials=100)
     best_params_xgb = study_xgb.best_params
     model_xgb = xgb.XGBRegressor(**best_params_xgb, random_state=42)
     model_xgb.fit(X_train, y_train)
 
     pred_rand = model_rand.predict(X_test)
     pred_xgb = model_xgb.predict(X_test)
-    final_pred = 0.5 * pred_rand + 0.5 * pred_xgb
+    final_pred = 0.4 * pred_rand + 0.6 * pred_xgb
 
     r2 = r2_score(y_test, final_pred)
     mse = mean_squared_error(y_test, final_pred)
@@ -126,7 +126,7 @@ def predict():
 
     pred_rand = model_rand.predict(X_input)[0]
     pred_xgb = model_xgb.predict(X_input)[0]
-    final_pred = 0.4 * pred_rand + 0.6 * pred_xgb
+    final_pred = 0.2 * pred_rand + 0.8 * pred_xgb
 
     return jsonify({"predicted_sales": int(final_pred)})
 
