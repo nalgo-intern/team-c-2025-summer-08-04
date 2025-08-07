@@ -27,7 +27,7 @@ def upload_csv():
     df["date"] = pd.to_datetime(df["日付"])
     df["year"] = df["date"].dt.year
     df["month"] = df["date"].dt.month
-    df["day"] = df["date"].dt.day
+    #df["day"] = df["date"].dt.day
     df["dayofweek"] = df["date"].dt.dayofweek  
     df["is_weekend"] = df["dayofweek"].apply(lambda x: int(x in [0, 4, 5, 6]))
 
@@ -35,7 +35,7 @@ def upload_csv():
     df["weather"] = df["天気"].map(weather_map)
     df["sales"] = df["売り上げ"]
 
-    X = df[["year", "month", "day", "weather", "is_weekend"]]
+    X = df[["year", "month","weather", "is_weekend"]]
     y = df["sales"]
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -105,8 +105,8 @@ def predict():
     dayofweek = date.weekday()  
     is_weekend = int(dayofweek in [0, 4, 5, 6])
 
-    X_input = pd.DataFrame([[year, month, day, weather, is_weekend]],
-                           columns=["year", "month", "day", "weather", "is_weekend"])
+    X_input = pd.DataFrame([[year, month,weather, is_weekend]],
+                           columns=["year", "month","weather", "is_weekend"])
 
     pred = model.predict(X_input)[0]
     return jsonify({"predicted_sales": int(pred)})
