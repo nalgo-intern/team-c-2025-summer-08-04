@@ -64,7 +64,7 @@ def upload_csv():
         return mean_absolute_error(y_test, pred)
 
     study = optuna.create_study(direction="minimize")
-    study.optimize(objective, n_trials=30)
+    study.optimize(objective, n_trials=100)
 
     best_params = study.best_params
     model = xgb.XGBRegressor(**best_params, random_state=42)
