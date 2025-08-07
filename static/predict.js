@@ -40,6 +40,8 @@ function uploadCSV() {
       document.getElementById("r2_score").textContent = "r2:"+data.r2_score;
       document.getElementById("mse").textContent = "mse:"+data.mse;
       document.getElementById("mae").textContent = "mae:"+data.mae;
+      document.getElementById("best").textContent = JSON.stringify(data.best_params, null, 2);
+
     })
     .catch(err => {
       document.getElementById("uploadStatus").textContent = "アップロード失敗";

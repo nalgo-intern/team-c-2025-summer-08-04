@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
+import optuna
+import xgboost as xgb
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from flask_cors import CORS
@@ -32,11 +33,33 @@ def upload_csv():
     df["weather"] = df["天気"].map(weather_map)
     df["sales"] = df["売り上げ"]
 
-    X = df[["year", "month", "day", "weather","is_weekend"]]
+    X = df[["year", "month", "day", "weather", "is_weekend"]]
     y = df["sales"]
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    model = RandomForestRegressor(max_depth=9,random_state=42)
+
+    # Optunaでハイパーパラメータチューニング
+    def objective(trial):
+        params = {
+            "max_depth": trial.suggest_int("max_depth", 3, 10),
+            "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3),
+            "n_estimators": trial.suggest_int("n_estimators", 50, 300),
+            "subsample": trial.suggest_float("subsample", 0.6, 1.0),
+            "colsample_bytree": trial.suggest_float("colsample_bytree", 0.6, 1.0),
+            "gamma": trial.suggest_float("gamma", 0, 5),
+            "reg_alpha": trial.suggest_float("reg_alpha", 0, 5),
+            "reg_lambda": trial.suggest_float("reg_lambda", 0, 5)
+        }
+        model_trial = xgb.XGBRegressor(**params, random_state=42)
+        model_trial.fit(X_train, y_train)
+        pred = model_trial.predict(X_test)
+        return mean_absolute_error(y_test, pred)
+
+    study = optuna.create_study(direction="minimize")
+    study.optimize(objective, n_trials=30)
+
+    best_params = study.best_params
+    model = xgb.XGBRegressor(**best_params, random_state=42)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
 
@@ -45,10 +68,11 @@ def upload_csv():
     mae = mean_absolute_error(y_test, y_pred)
 
     return jsonify({
-        "message": "CSVを受け取り、学習と評価が完了しました",
+        "message": "学習が完了しました",
         "r2_score": round(r2, 4),
         "mse": round(mse, 2),
-        "mae": round(mae, 2)
+        "mae": round(mae, 2),
+        "best_params": best_params
     })
 
 @app.route("/sendData", methods=["POST"])

@@ -5,6 +5,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from flask_cors import CORS
 import datetime
+import optuna
+
 app = Flask(__name__)
 CORS(app)
 
@@ -18,6 +20,7 @@ def index():
 @app.route("/upload-csv", methods=["POST"])
 def upload_csv():
     global df, model
+
     file = request.files["file"]
     df = pd.read_csv(file)
 
@@ -25,18 +28,42 @@ def upload_csv():
     df["year"] = df["date"].dt.year
     df["month"] = df["date"].dt.month
     df["day"] = df["date"].dt.day
-    df["dayofweek"] = df["date"].dt.dayofweek  
+    df["dayofweek"] = df["date"].dt.dayofweek
     df["is_weekend"] = df["dayofweek"].apply(lambda x: int(x in [0, 4, 5, 6]))
 
     weather_map = {"晴れ": 0, "くもり": 1, "雨": 2}
     df["weather"] = df["天気"].map(weather_map)
     df["sales"] = df["売り上げ"]
 
-    X = df[["month", "day", "weather","is_weekend"]]
+    X = df[["year", "month", "day", "weather", "is_weekend"]]
     y = df["sales"]
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    model = RandomForestRegressor(max_depth=9,random_state=42)
+
+    # Optuna objective
+    def objective(trial):
+        params = {
+            "n_estimators": trial.suggest_int("n_estimators", 50, 300),
+            "max_depth": trial.suggest_int("max_depth", 3, 20),
+            "min_samples_split": trial.suggest_int("min_samples_split", 2, 10),
+            "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 10),
+            "max_features": trial.suggest_categorical("max_features", ["sqrt", "log2", None]),
+            "random_state": 42
+        }
+
+        model_tmp = RandomForestRegressor(**params)
+        model_tmp.fit(X_train, y_train)
+        y_pred = model_tmp.predict(X_test)
+        return mean_squared_error(y_test, y_pred)
+
+    # 最適化の実行
+    study = optuna.create_study(direction="minimize")
+    study.optimize(objective, n_trials=30)
+
+    # 最良パラメータで再学習
+    best_params = study.best_params
+    best_params["random_state"] = 42
+    model = RandomForestRegressor(**best_params)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
 
@@ -45,10 +72,11 @@ def upload_csv():
     mae = mean_absolute_error(y_test, y_pred)
 
     return jsonify({
-        "message": "CSVを受け取り、学習と評価が完了しました",
+        "message": "学習・評価完了",
         "r2_score": round(r2, 4),
         "mse": round(mse, 2),
-        "mae": round(mae, 2)
+        "mae": round(mae, 2),
+        "best_params": best_params
     })
 
 @app.route("/sendData", methods=["POST"])
@@ -67,8 +95,8 @@ def predict():
     dayofweek = date.weekday()  
     is_weekend = int(dayofweek in [0, 4, 5, 6])
 
-    X_input = pd.DataFrame([[month, day, weather, is_weekend]],
-                           columns=["month", "day", "weather", "is_weekend"])
+    X_input = pd.DataFrame([[year, month, day, weather, is_weekend]],
+                           columns=["year", "month", "day", "weather", "is_weekend"])
 
     pred = model.predict(X_input)[0]
     return jsonify({"predicted_sales": int(pred)})
