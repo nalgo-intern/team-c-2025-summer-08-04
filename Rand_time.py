@@ -66,7 +66,7 @@ def upload_csv():
 
     # 最適化の実行
     study = optuna.create_study(direction="minimize")
-    study.optimize(objective, n_trials=30)
+    study.optimize(objective, n_trials=60)
 
     # 最良パラメータで再学習
     best_params = study.best_params
